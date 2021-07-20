@@ -22,6 +22,7 @@ import org.apache.shardingsphere.infra.rule.type.DataNodeContainedRule;
 import org.apache.shardingsphere.infra.rule.type.TableContainedRule;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -66,5 +67,15 @@ public final class DataNodeContainedFixtureRule implements DataNodeContainedRule
     @Override
     public Collection<String> getTables() {
         return new HashSet<>(actualTableNameMaps.values());
+    }
+    
+    @Override
+    public Optional<String> findActualTableByCatalog(final String catalog, final String logicTable) {
+        return Optional.empty();
+    }
+    
+    @Override
+    public Collection<String> getAllTables() {
+        return Collections.emptyList();
     }
 }

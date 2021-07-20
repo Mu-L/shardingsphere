@@ -47,7 +47,7 @@ public final class RouteContext {
     private final Map<Class<? extends ShardingSphereRule>, RouteStageContext> routeStageContexts = new LinkedHashMap<>();
     
     @Setter
-    private boolean toCalcite;
+    private boolean isFederated;
     
     /**
      * Judge is route for single database and table only or not.
@@ -83,7 +83,7 @@ public final class RouteContext {
     }
     
     private Set<String> getActualTableNames(final String actualDataSourceName, final String logicTableName) {
-        Set<String> result = new HashSet<>();
+        Set<String> result = new LinkedHashSet<>();
         for (RouteUnit each : routeUnits) {
             if (actualDataSourceName.equalsIgnoreCase(each.getDataSourceMapper().getActualName())) {
                 result.addAll(each.getActualTableNames(logicTableName));
@@ -140,16 +140,28 @@ public final class RouteContext {
      * Put route unit.
      *
      * @param dataSourceMapper database mapper
-     * @param tableMapper table mapper
+     * @param tableMappers table mapper collection
      */
-    public void putRouteUnit(final RouteMapper dataSourceMapper, final RouteMapper tableMapper) {
-        Optional<RouteUnit> target = routeUnits.stream().filter(unit -> unit.getDataSourceMapper().equals(dataSourceMapper)).findFirst();
-        RouteUnit unit = new RouteUnit(dataSourceMapper, new LinkedHashSet<>());
-        if (target.isPresent()) {
-            unit.getTableMappers().addAll(target.get().getTableMappers());
-            routeUnits.remove(target.get());
+    public void putRouteUnit(final RouteMapper dataSourceMapper, final Collection<RouteMapper> tableMappers) {
+        Collection<RouteUnit> targets = routeUnits.stream().filter(unit -> unit.getDataSourceMapper().equals(dataSourceMapper)).collect(Collectors.toList());
+        if (targets.isEmpty()) {
+            RouteUnit unit = new RouteUnit(dataSourceMapper, new LinkedHashSet<>());
+            unit.getTableMappers().addAll(tableMappers);
+            routeUnits.add(unit);
+        } else {
+            Collection<RouteUnit> toBeAdded = new LinkedList<>();
+            Collection<RouteUnit> toBeRemoved = new LinkedList<>();
+            for (RouteUnit each : targets) {
+                RouteUnit unit = new RouteUnit(dataSourceMapper, new LinkedHashSet<>());
+                unit.getTableMappers().addAll(each.getTableMappers());
+                unit.getTableMappers().addAll(tableMappers);
+                toBeAdded.add(unit);
+                toBeRemoved.add(each);
+            }
+            boolean success = routeUnits.addAll(toBeAdded);
+            if (success) {
+                routeUnits.removeAll(toBeRemoved);
+            }
         }
-        unit.getTableMappers().add(tableMapper);
-        routeUnits.add(unit);
     }
 }

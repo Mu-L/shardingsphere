@@ -66,4 +66,20 @@ public interface DataNodeContainedRule extends ShardingSphereRule {
      * @return logic table name
      */
     Optional<String> findLogicTableByActualTable(String actualTable);
+    
+    /**
+     * Find actual table name via catelog.
+     * 
+     * @param catalog catalog
+     * @param logicTable logic table name
+     * @return actual table name
+     */
+    Optional<String> findActualTableByCatalog(String catalog, String logicTable);
+    
+    /**
+     * Get all tables.
+     *
+     * @return all tables
+     */
+    Collection<String> getAllTables();
 }
